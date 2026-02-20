@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Generated schema for Root",
+  "type": "object",
+  "properties": {
+    "eventType": {
+      "type": "string"
+    },
+    "subscriptionInformation": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "age": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "age"
+      ]
+    }
+  },
+  "required": [
+    "eventType",
+    "subscriptionInformation"
+  ]
+}

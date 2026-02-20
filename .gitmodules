@@ -1,0 +1,3 @@
+[submodule "cip-schemas"]
+	path = cip-schemas
+	url = git@github.com:hmrc/cip-schemas.git
