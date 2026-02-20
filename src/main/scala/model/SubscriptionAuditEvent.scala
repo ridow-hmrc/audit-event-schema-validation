@@ -3,11 +3,14 @@ package model
 import generator.*
 import play.api.libs.json.{Json, OFormat}
 
+import java.time.LocalDate
+
 @CipAuditEventSchema(
   schemaFile = "src/main/resources/subscription-audit-event-schema.json"
 )
 case class SubscriptionAuditEvent(
     eventType: String,
+    eventDate: LocalDate,
     subscriptionInformation: SubscriptionInformation
 )
 
