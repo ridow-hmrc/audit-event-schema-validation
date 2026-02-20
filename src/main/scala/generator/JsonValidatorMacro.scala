@@ -11,13 +11,11 @@ import scala.util.Random
 object JsonValidatorMacro:
 
   val requiredAnnotation = "generator.CipAuditEventSchema"
-  // 1. The Entry Point
   inline def generateValidatedJson[T]: OFormat[T] = ${ generateImpl[T] }
 
   def generateImpl[T: Type](using Quotes): Expr[OFormat[T]] =
     import quotes.reflect.*
 
-    // 2. Recursive helper to build the JSON string at compile-time
     def buildJson(tpe: TypeRepr): String =
       val sym = tpe.typeSymbol
 
@@ -39,13 +37,12 @@ object JsonValidatorMacro:
     val generatedJson = buildJson(TypeRepr.of[T])
 
     val schema = loadSchema[T]
-    // 3. YOUR VALIDATION LOGIC
     if !isValidJson(generatedJson, schema) then
       report.errorAndAbort(s"AuditEvent does not match CIP Schema")
 
     JsMacroImpl.format[T]
 
-  def loadSchema[T:Type](using Quotes): Schema = {
+  private def loadSchema[T:Type](using Quotes): Schema = {
     import quotes.reflect.*
     val typeSymbol = TypeRepr.of[T].typeSymbol
     val annot = typeSymbol.annotations.find(_.tpe.show == requiredAnnotation).getOrElse {
@@ -56,13 +53,10 @@ object JsonValidatorMacro:
       case Apply(Select(New(_), _), List(NamedArg("schemaFile", Literal(c)))) => c.value.toString
       case _ => report.errorAndAbort("Could not read schemaFile path from annotation.")
     }
-
-
      SchemaLoader.forURL(new File(schemaFile).toURI.toURL.toString).load()
-
   }
-  
-  def isValidJson(json: String, schema: Schema): Boolean = {
+
+  private def isValidJson(json: String, schema: Schema): Boolean = {
     val validator = Validator.forSchema(schema)
 
     val parsedJson = new JsonParser(json).parse()
