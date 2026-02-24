@@ -1,7 +1,7 @@
 package generator
 
 import com.github.erosb.jsonsKema.{JsonParser, Schema, SchemaDocumentLoadingException, SchemaLoader, Validator}
-import play.api.libs.json.{JsMacroImpl, Json, OFormat}
+import play.api.libs.json.{JsBoolean, JsMacroImpl, JsNumber, JsObject, JsString, JsValue, Json, OFormat}
 
 import java.io.File
 import java.time.LocalDate
@@ -14,25 +14,23 @@ object JsonValidatorMacro:
   val requiredAnnotation                          = "generator.CipAuditEventSchema"
   inline def generateValidatedJson[T]: OFormat[T] = ${ generateImpl[T] }
 
-  def addQuotations(str: String) = s"\"$str\""
-
   def generateImpl[T: Type](using Quotes): Expr[OFormat[T]] =
     import quotes.reflect.*
 
-    def buildJson(tpe: TypeRepr): String =
+    def buildJson(tpe: TypeRepr): JsValue =
       val sym = tpe.typeSymbol
 
       tpe.asType match
         case '[String] =>
-          addQuotations(Random.alphanumeric.take(8).mkString)
+          JsString(Random.alphanumeric.take(8).mkString)
         case '[Int] =>
-          Random.nextInt(100).toString
+          JsNumber(Random.nextInt(100))
         case '[Boolean] =>
-          Random.nextBoolean().toString
+          JsBoolean(Random.nextBoolean())
         case '[Double] =>
-          Random.nextDouble().toString
+          JsNumber(Random.nextDouble())
         case '[LocalDate] =>
-          addQuotations(LocalDate.now.toString)
+          JsString(LocalDate.now.toString)
         case '[Option[t]] =>
           buildJson(TypeRepr.of[t])
         case t if sym.isClassDef && sym.flags.is(Flags.Case) =>
@@ -41,17 +39,16 @@ object JsonValidatorMacro:
             .map { field =>
               val name     = field.name
               val fieldTpe = tpe.memberType(field)
-              s"\"$name\": ${buildJson(fieldTpe)}"
+              name -> buildJson(fieldTpe)
             }
-            .mkString(", ")
-          s"{ $body }"
+          JsObject(body)
         case _ => report.errorAndAbort(s"Unsupported type: ${tpe.show}")
 
     val generatedJson = buildJson(TypeRepr.of[T])
 
     val schema = loadSchema[T]
 
-    if !isValidJson(generatedJson, schema) then report.errorAndAbort(s"AuditEvent does not match CIP Schema")
+    if !isValidJson(generatedJson.toString, schema) then report.errorAndAbort(s"AuditEvent does not match CIP Schema")
 
     JsMacroImpl.format[T]
 
