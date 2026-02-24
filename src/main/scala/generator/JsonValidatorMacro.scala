@@ -1,12 +1,17 @@
 package generator
 
-import com.github.erosb.jsonsKema.{JsonParser, Schema, SchemaDocumentLoadingException, SchemaLoader, Validator}
+import com.networknt.schema.SchemaRegistry
+import com.networknt.schema.regex.JoniRegularExpressionFactory
 import play.api.libs.json.{JsBoolean, JsMacroImpl, JsNumber, JsObject, JsString, JsValue, Json, OFormat}
+import tools.jackson.databind.{JsonNode, ObjectMapper}
 
 import java.io.File
+import java.net.URI
 import java.time.LocalDate
 import scala.quoted.*
 import scala.deriving.Mirror
+import scala.io.Source
+import scala.jdk.CollectionConverters._
 import scala.util.Random
 
 object JsonValidatorMacro:
@@ -52,7 +57,7 @@ object JsonValidatorMacro:
 
     JsMacroImpl.format[T]
 
-  private def loadSchema[T: Type](using Quotes): Schema = {
+  private def loadSchema[T: Type](using Quotes): URI = {
     import quotes.reflect.*
     val typeSymbol = TypeRepr.of[T].typeSymbol
     val annot      = typeSymbol.annotations.find(_.tpe.show == requiredAnnotation).getOrElse {
@@ -63,22 +68,26 @@ object JsonValidatorMacro:
       case Apply(Select(New(_), _), List(NamedArg("schemaFile", Literal(c)))) => c.value.toString
       case _ => report.errorAndAbort("Could not read schemaFile path from annotation.")
     }
-    try {
-      SchemaLoader.forURL(new File(schemaFile).toURI.toURL.toString).load()
-    } catch {
-      case error: Throwable => report.errorAndAbort(s"Failed to load schema file: $schemaFile")
-    }
+    new File(schemaFile).toURI
   }
 
-  private def isValidJson(json: String, schema: Schema)(using Quotes): Boolean = {
+  private def isValidJson(json: String, schemaLocation: URI)(using Quotes): Boolean = {
+    import com.networknt.schema.SchemaRegistryConfig
     import quotes.reflect.*
-    val validator = Validator.forSchema(schema)
+    val schemaRegistryConfig: SchemaRegistryConfig = SchemaRegistryConfig
+      .builder()
+      .regularExpressionFactory(JoniRegularExpressionFactory.getInstance())
+      .build()
 
-    val parsedJson = new JsonParser(json).parse()
+    val schemaRegistry     = SchemaRegistry.builder().schemaRegistryConfig(schemaRegistryConfig).build()
+    val schemaStream       = Source.fromURI(schemaLocation).mkString
+    val schema             = schemaRegistry.getSchema(schemaStream)
+    val objMapper          = new ObjectMapper()
+    val jsonnode: JsonNode = objMapper.readTree(json)
+    val errors             = schema.validate(jsonnode).asScala
 
-    val validationResult = Option(validator.validate(parsedJson))
-    validationResult.tapEach(f => {
+    errors.foreach(f => {
       report.info(s"Failed CIP validation: ${f.toString}")
     })
-    validationResult.isEmpty
+    errors.isEmpty
   }
