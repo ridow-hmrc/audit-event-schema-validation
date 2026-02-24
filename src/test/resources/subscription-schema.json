@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "type": "object",
+  "description": "Personal information",
+  "properties": {
+    "age": {
+      "type": "number",
+      "description": "Age in years"
+    },
+    "name": {
+      "type": "string",
+      "description": "name of the person"
+    },
+    "address": {
+      "type": "object",
+      "description": "Address information",
+      "properties": {
+        "street": {
+          "type": "string",
+          "description": "Street address"
+        },
+        "postcode": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "street",
+        "postcode"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "name",
+    "age",
+    "address"
+  ]
+}

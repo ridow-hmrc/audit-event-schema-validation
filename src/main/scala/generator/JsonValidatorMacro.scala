@@ -1,6 +1,6 @@
 package generator
 
-import com.github.erosb.jsonsKema.{JsonParser, Schema, SchemaLoader, Validator}
+import com.github.erosb.jsonsKema.{JsonParser, Schema, SchemaDocumentLoadingException, SchemaLoader, Validator}
 import play.api.libs.json.{JsMacroImpl, Json, OFormat}
 
 import java.io.File
@@ -33,7 +33,6 @@ object JsonValidatorMacro:
           Random.nextDouble().toString
         case '[LocalDate] =>
           addQuotations(LocalDate.now.toString)
-
         case t if sym.isClassDef && sym.flags.is(Flags.Case) =>
           val fields = sym.caseFields
           val body = fields.map { field =>
@@ -65,15 +64,22 @@ object JsonValidatorMacro:
       case Apply(Select(New(_), _), List(NamedArg("schemaFile", Literal(c)))) => c.value.toString
       case _ => report.errorAndAbort("Could not read schemaFile path from annotation.")
     }
-     SchemaLoader.forURL(new File(schemaFile).toURI.toURL.toString).load()
+    try {
+      SchemaLoader.forURL(new File(schemaFile).toURI.toURL.toString).load() 
+    } catch {
+      case error: Throwable => report.errorAndAbort(s"Failed to load schema file: $schemaFile")
+    }
   }
 
-  private def isValidJson(json: String, schema: Schema): Boolean = {
+  private def isValidJson(json: String, schema: Schema)(using Quotes): Boolean = {
+    import quotes.reflect.*
     val validator = Validator.forSchema(schema)
     
     val parsedJson = new JsonParser(json).parse()
 
     val validationResult = Option(validator.validate(parsedJson))
-
+    validationResult.tapEach(f => {
+      report.info(s"Failed CIP validation: ${f.toString}")
+    })
     validationResult.isEmpty
   }
