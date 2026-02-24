@@ -10,6 +10,7 @@ import java.time.LocalDate
 )
 case class SubscriptionAuditEvent(
     eventType: String,
+    eventCancelled: Option[Boolean],
     eventDate: LocalDate,
     subscriptionInformation: SubscriptionInformation
 )

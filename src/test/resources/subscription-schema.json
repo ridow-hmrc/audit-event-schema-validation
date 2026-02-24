@@ -21,9 +21,6 @@
         },
         "postcode": {
           "type": "string"
-        },
-        "country": {
-          "type": "string"
         }
       },
       "required": [

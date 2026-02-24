@@ -33,6 +33,8 @@ object JsonValidatorMacro:
           Random.nextDouble().toString
         case '[LocalDate] =>
           addQuotations(LocalDate.now.toString)
+        case '[Option[t]] =>
+          buildJson(TypeRepr.of[t])
         case t if sym.isClassDef && sym.flags.is(Flags.Case) =>
           val fields = sym.caseFields
           val body = fields.map { field =>
@@ -65,7 +67,7 @@ object JsonValidatorMacro:
       case _ => report.errorAndAbort("Could not read schemaFile path from annotation.")
     }
     try {
-      SchemaLoader.forURL(new File(schemaFile).toURI.toURL.toString).load() 
+      SchemaLoader.forURL(new File(schemaFile).toURI.toURL.toString).load()
     } catch {
       case error: Throwable => report.errorAndAbort(s"Failed to load schema file: $schemaFile")
     }

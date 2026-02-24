@@ -81,22 +81,22 @@ class JsonValidatorMacroTest extends AnyFunSuite with Inside with Inspectors wit
       |object Subscription:
       |  implicit val format: OFormat[Subscription] = JsonValidatorMacro.generateValidatedJson[Subscription]""".stripMargin should compile
   }
-//
-//  test("additional property") {
-//    """
-//      |
-//      |import generator.{CipAuditEventSchema, JsonValidatorMacro}
-//      |import play.api.libs.json.{Json, OFormat}
-//      |
-//      |
-//      |@CipAuditEventSchema(schemaFile = "src/test/resources/subscription-schema.json")
-//      |case class Subscription(name: String, age:Int, address: Address)
-//      |
-//      |case class Address(street: String, postcode: String, country: Option[String])
-//      |
-//      |object Address:
-//      |  implicit val format: OFormat[Address] = Json.format[Address]
-//      |
-//      |object Subscription:
-//      |  implicit val format: OFormat[Subscription] = JsonValidatorMacro.generateValidatedJson[Subscription]""".stripMargin should compile
-//  }
+
+  test("additional property") {
+    """
+      |
+      |import generator.{CipAuditEventSchema, JsonValidatorMacro}
+      |import play.api.libs.json.{Json, OFormat}
+      |
+      |
+      |@CipAuditEventSchema(schemaFile = "src/test/resources/subscription-schema.json")
+      |case class Subscription(name: String, age:Int, address: Address)
+      |
+      |case class Address(street: String, postcode: String, country: Option[String])
+      |
+      |object Address:
+      |  implicit val format: OFormat[Address] = Json.format[Address]
+      |
+      |object Subscription:
+      |  implicit val format: OFormat[Subscription] = JsonValidatorMacro.generateValidatedJson[Subscription]""".stripMargin shouldNot compile
+  }
