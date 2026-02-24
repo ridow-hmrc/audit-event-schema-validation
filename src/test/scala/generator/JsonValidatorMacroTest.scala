@@ -9,9 +9,9 @@ import scala.language.postfixOps
 import scala.io.BufferedSource
 
 class JsonValidatorMacroTest extends AnyFunSuite with Inside with Inspectors with Matchers:
-  
-  test("missing annotation"){
-     """import generator.JsonValidatorMacro
+
+  test("missing annotation") {
+    """import generator.JsonValidatorMacro
         |import play.api.libs.json.{Json, OFormat}
         |
         |case class Subscription(name: String, age:Int, address: Address)
