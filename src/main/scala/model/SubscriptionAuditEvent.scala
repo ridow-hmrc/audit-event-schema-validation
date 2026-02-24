@@ -11,6 +11,7 @@ import java.time.LocalDate
 case class SubscriptionAuditEvent(
     eventType: String,
     eventCancelled: Option[Boolean],
+    set: Set[String],
     eventDate: LocalDate,
     subscriptionInformation: SubscriptionInformation
 )

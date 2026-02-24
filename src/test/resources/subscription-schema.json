@@ -11,6 +11,12 @@
       "type": "string",
       "description": "name of the person"
     },
+    "list": {
+      "type": "array"
+    },
+    "set": {
+      "type": "array"
+    },
     "address": {
       "type": "object",
       "description": "Address information",
@@ -33,6 +39,8 @@
   "required": [
     "name",
     "age",
+    "list",
+    "set",
     "address"
   ]
 }

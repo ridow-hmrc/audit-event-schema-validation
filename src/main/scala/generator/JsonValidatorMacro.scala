@@ -2,7 +2,7 @@ package generator
 
 import com.networknt.schema.SchemaRegistry
 import com.networknt.schema.regex.JoniRegularExpressionFactory
-import play.api.libs.json.{JsBoolean, JsMacroImpl, JsNumber, JsObject, JsString, JsValue, Json, OFormat}
+import play.api.libs.json.{JsArray, JsBoolean, JsMacroImpl, JsNumber, JsObject, JsString, JsValue, Json, OFormat}
 import tools.jackson.databind.{JsonNode, ObjectMapper}
 
 import java.io.File
@@ -11,7 +11,7 @@ import java.time.LocalDate
 import scala.quoted.*
 import scala.deriving.Mirror
 import scala.io.Source
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 import scala.util.Random
 
 object JsonValidatorMacro:
@@ -38,6 +38,9 @@ object JsonValidatorMacro:
           JsString(LocalDate.now.toString)
         case '[Option[t]] =>
           buildJson(TypeRepr.of[t])
+        case '[List[t]] =>
+          JsArray(List(buildJson(TypeRepr.of[t])))
+        case '[Set[t]]                                       => JsArray(Seq(buildJson(TypeRepr.of[t])))
         case t if sym.isClassDef && sym.flags.is(Flags.Case) =>
           val fields = sym.caseFields
           val body   = fields

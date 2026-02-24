@@ -71,7 +71,7 @@ class JsonValidatorMacroTest extends AnyFunSuite with Inside with Inspectors wit
       |
       |
       |@CipAuditEventSchema(schemaFile = "src/test/resources/subscription-schema.json")
-      |case class Subscription(name: String, age:Int, address: Address)
+      |case class Subscription(name: String, age:Int, list: List[String], set: Set[String], address: Address)
       |
       |case class Address(street: String, postcode: String)
       |
@@ -90,7 +90,7 @@ class JsonValidatorMacroTest extends AnyFunSuite with Inside with Inspectors wit
       |
       |
       |@CipAuditEventSchema(schemaFile = "src/test/resources/subscription-schema.json")
-      |case class Subscription(name: String, age:Int, address: Address)
+      |case class Subscription(name: String, age:Int,list: List[String], set: Set[String], address: Address)
       |
       |case class Address(street: String, postcode: String, country: Option[String])
       |
