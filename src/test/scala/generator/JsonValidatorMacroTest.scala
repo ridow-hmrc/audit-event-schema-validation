@@ -1,12 +1,10 @@
 package generator
 
-import org.scalatest.{Inside, Inspectors}
-import org.scalatest.matchers.should.*
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.*
+import org.scalatest.{Inside, Inspectors}
 
-import scala.io.Source
 import scala.language.postfixOps
-import scala.io.BufferedSource
 
 class JsonValidatorMacroTest extends AnyFunSuite with Inside with Inspectors with Matchers:
 
@@ -32,7 +30,7 @@ class JsonValidatorMacroTest extends AnyFunSuite with Inside with Inspectors wit
       |import play.api.libs.json.{Json, OFormat}
       |
       |
-      |@CipAuditEventSchema(schemaFile = "src/test/resources/subscription-schema-not-found.json")
+      |@CipAuditEventSchema(schemaFile = "/subscription-schema-not-found.json")
       |case class Subscription(name: String, age:Int, address: Address)
       |
       |case class Address(street: String, postcode: String)
@@ -50,8 +48,7 @@ class JsonValidatorMacroTest extends AnyFunSuite with Inside with Inspectors wit
       |import generator.{CipAuditEventSchema, JsonValidatorMacro}
       |import play.api.libs.json.{Json, OFormat}
       |
-      |
-      |@CipAuditEventSchema(schemaFile = "src/test/resources/subscription-schema.json")
+      |src/test/resources/subscription-schema.json")
       |case class Subscription(name: String, age:Int, address: Address)
       |
       |case class Address(street: String)
@@ -70,7 +67,7 @@ class JsonValidatorMacroTest extends AnyFunSuite with Inside with Inspectors wit
       |import play.api.libs.json.{Json, OFormat}
       |
       |
-      |@CipAuditEventSchema(schemaFile = "src/test/resources/subscription-schema.json")
+      |@CipAuditEventSchema(schemaFile = "/subscription-schema.json")
       |case class Subscription(name: String, age:Int, list: List[String], set: Set[String], address: Address)
       |
       |case class Address(street: String, postcode: String)
@@ -89,7 +86,7 @@ class JsonValidatorMacroTest extends AnyFunSuite with Inside with Inspectors wit
       |import play.api.libs.json.{Json, OFormat}
       |
       |
-      |@CipAuditEventSchema(schemaFile = "src/test/resources/subscription-schema.json")
+      |@CipAuditEventSchema(schemaFile = "/subscription-schema.json")
       |case class Subscription(name: String, age:Int,list: List[String], set: Set[String], address: Address)
       |
       |case class Address(street: String, postcode: String, country: Option[String])

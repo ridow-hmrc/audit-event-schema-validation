@@ -44,6 +44,21 @@ object JsonValidatorMacro:
           JsArray(List(buildJson(TypeRepr.of[t])))
         case '[Set[t]] =>
           JsArray(Seq(buildJson(TypeRepr.of[t])))
+        case _ if tpe.typeSymbol.flags.is(Flags.Enum) =>
+          val sym = tpe.typeSymbol
+          // Get all cases of the enum (e.g., Color.Red, Color.Blue)
+          val cases = sym.children
+          if cases.isEmpty then report.errorAndAbort(s"Enum ${sym.name} has no cases.")
+
+          // Pick a random case
+          val randomCaseSymbol = cases(Random.nextInt(cases.size))
+
+          // If the case is a simple value (no parameters), return it as a string
+          if !randomCaseSymbol.isClassDef then JsString(randomCaseSymbol.name)
+          else
+            // If the case is a "parameterized" case (like a case class inside an enum)
+            // we recurse using its specific TypeRepr
+            buildJson(tpe.memberType(randomCaseSymbol))
         case t if sym.isClassDef && sym.flags.is(Flags.Case) =>
           val fields = sym.caseFields
           val body   = fields
@@ -74,7 +89,7 @@ object JsonValidatorMacro:
       case Apply(Select(New(_), _), List(NamedArg("schemaFile", Literal(c)))) => c.value.toString
       case _ => report.errorAndAbort("Could not read schemaFile path from annotation.")
     }
-    URI.create( s"resource:$schemaFile")
+    URI.create(s"resource:$schemaFile")
   }
 
   val refPrefix                                                          = "cip-schemas/conf"
@@ -102,7 +117,7 @@ object JsonValidatorMacro:
       .regularExpressionFactory(JoniRegularExpressionFactory.getInstance())
       .build()
 
-    val schemaLocation = SchemaLocation.of(schemaUri.toString)
+    val schemaLocation     = SchemaLocation.of(schemaUri.toString)
     val schemaRegistry     = SchemaRegistry.builder().schemaRegistryConfig(schemaRegistryConfig).build()
     val schema             = schemaRegistry.getSchema(schemaLocation)
     val objMapper          = new ObjectMapper()
