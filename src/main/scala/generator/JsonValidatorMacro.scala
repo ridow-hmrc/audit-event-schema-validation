@@ -1,9 +1,11 @@
 package generator
 
-import com.networknt.schema.SchemaRegistry
+import com.networknt.schema.{SchemaLocation, SchemaRegistry}
 import com.networknt.schema.regex.JoniRegularExpressionFactory
 import play.api.libs.json.{JsArray, JsBoolean, JsMacroImpl, JsNumber, JsObject, JsString, JsValue, Json, OFormat}
 import tools.jackson.databind.{JsonNode, ObjectMapper}
+import play.api.libs.json.*
+import play.api.libs.json.Reads.*
 
 import java.io.File
 import java.net.URI
@@ -40,7 +42,8 @@ object JsonValidatorMacro:
           buildJson(TypeRepr.of[t])
         case '[List[t]] =>
           JsArray(List(buildJson(TypeRepr.of[t])))
-        case '[Set[t]]                                       => JsArray(Seq(buildJson(TypeRepr.of[t])))
+        case '[Set[t]] =>
+          JsArray(Seq(buildJson(TypeRepr.of[t])))
         case t if sym.isClassDef && sym.flags.is(Flags.Case) =>
           val fields = sym.caseFields
           val body   = fields
@@ -71,10 +74,27 @@ object JsonValidatorMacro:
       case Apply(Select(New(_), _), List(NamedArg("schemaFile", Literal(c)))) => c.value.toString
       case _ => report.errorAndAbort("Could not read schemaFile path from annotation.")
     }
-    new File(schemaFile).toURI
+    URI.create( s"resource:$schemaFile")
   }
 
-  private def isValidJson(json: String, schemaLocation: URI)(using Quotes): Boolean = {
+  val refPrefix                                                          = "cip-schemas/conf"
+  private def updateAllNames(modifier: String => String): Reads[JsValue] = {
+    case JsObject(fields) =>
+      JsSuccess(JsObject(fields.map {
+        case ("$ref", JsString(value)) => ("$ref", JsString(s"$refPrefix$value"))
+        case (key, value)              => (key, value.transform(updateAllNames(modifier)).getOrElse(value))
+      }))
+    case JsArray(values) =>
+      JsSuccess(JsArray(values.map(v => v.transform(updateAllNames(modifier)).getOrElse(v))))
+    case other => JsSuccess(other)
+  }
+
+  private def updateRefs(schema: String): String = {
+    val schemaJson = Json.parse(schema)
+    schemaJson.transform(updateAllNames(_.toUpperCase)).get.toString
+  }
+
+  private def isValidJson(json: String, schemaUri: URI)(using Quotes): Boolean = {
     import com.networknt.schema.SchemaRegistryConfig
     import quotes.reflect.*
     val schemaRegistryConfig: SchemaRegistryConfig = SchemaRegistryConfig
@@ -82,9 +102,9 @@ object JsonValidatorMacro:
       .regularExpressionFactory(JoniRegularExpressionFactory.getInstance())
       .build()
 
+    val schemaLocation = SchemaLocation.of(schemaUri.toString)
     val schemaRegistry     = SchemaRegistry.builder().schemaRegistryConfig(schemaRegistryConfig).build()
-    val schemaStream       = Source.fromURI(schemaLocation).mkString
-    val schema             = schemaRegistry.getSchema(schemaStream)
+    val schema             = schemaRegistry.getSchema(schemaLocation)
     val objMapper          = new ObjectMapper()
     val jsonnode: JsonNode = objMapper.readTree(json)
     val errors             = schema.validate(jsonnode).asScala

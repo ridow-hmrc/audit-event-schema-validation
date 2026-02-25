@@ -10,3 +10,4 @@ lazy val root = project
     libraryDependencies += "org.scalatest"     %% "scalatest"             % "3.2.19" % Test,
     libraryDependencies += "com.networknt"      % "json-schema-validator" % "3.0.0"
   )
+  .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "cip-schemas" / "conf")
